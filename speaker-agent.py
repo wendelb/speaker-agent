@@ -12,6 +12,7 @@ import threading
 import socket
 from gi.repository import GObject
 from MPDListener import MPDListener
+from SocketListener import SocketListener
 from SpeakerActor import Speakers
 
 LOG_LEVEL = logging.INFO
@@ -82,6 +83,9 @@ if __name__ == "__main__":
 
     mpd = MPDListener()
     mpd.run()
+
+    socket = SocketListener()
+    socket.run()
 
     try:
         mainloop = GObject.MainLoop()
