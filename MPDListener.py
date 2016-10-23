@@ -20,7 +20,7 @@ class MPDListener(object):
         client.timeout = 2
         while(True):
             try:
-                client.connect("localhost", 6600)
+                client.connect("/run/mpd/socket", 0)
                 break
             except:
                 pass
@@ -47,7 +47,7 @@ class MPDListener(object):
                 while(True):
                     sleep(5)
                     try:
-                        client.connect("localhost", 6600)
+                        client.connect("/run/mpd/socket", 0)
                         break
                     except:
                         pass
