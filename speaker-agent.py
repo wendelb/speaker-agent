@@ -11,8 +11,7 @@ import dbus.mainloop.glib
 import threading
 import socket
 from gi.repository import GObject
-import mpd
-from time import sleep
+from MPDListener import MPDListener
 from SpeakerActor import Speakers
 
 LOG_LEVEL = logging.INFO
@@ -57,56 +56,6 @@ def device_property_changed_cb(property_name, value, path, interface, device_pat
 
 
 
-def handle_mpd():
-    global devices
-
-    client = mpd.MPDClient()
-    client.timeout = 2
-    while(True):
-        try:
-            client.connect("localhost", 6600)
-            break
-        except:
-            pass
-        sleep(5)
-
-    logger.info("MPD Version: %s" % client.mpd_version)
-
-    mpd_status = client.status().get('state')
-
-    while (True):
-        # Variable setzen, falls es in der Schleife zu Exceptions kommt
-        new_status = 'Stop'
-        try:
-            client.idle('player')
-            new_status = client.status().get('state')
-        except (mpd.ConnectionError, ConnectionRefusedError) as e:
-            # Verbindung verloren
-            logger.warn('Verbindung zu MPD verloren')
-
-            # -> keine Speaker mehr
-            removeDevice('mpd')
-
-            # -> neu verbinden
-            while(True):
-                sleep(5)
-                try:
-                    client.connect("localhost", 6600)
-                    break
-                except:
-                    pass
-
-
-        if ((new_status == 'play') and (mpd_status == 'stop')):
-            logger.info('Neuer MPD Status: play')
-            Speakers.addDevice('mpd')
-        elif ((new_status == 'stop') and (mpd_status == 'play')):
-            logger.info('Neuer MPD Status: stop')
-            Speakers.removeDevice('mpd')
-
-        mpd_status = new_status
-
-
 def shutdown(signum, frame):
     logger.error("Shutdown received")
     mainloop.quit()
@@ -131,8 +80,8 @@ if __name__ == "__main__":
     # listen for signals on the Bluez bus
     bus.add_signal_receiver(device_property_changed_cb, bus_name="org.bluez", signal_name="PropertiesChanged", path_keyword="device_path", interface_keyword="interface")
 
-    th = threading.Thread(target=handle_mpd)
-    th.start()
+    mpd = MPDListener()
+    mpd.run()
 
     try:
         mainloop = GObject.MainLoop()
