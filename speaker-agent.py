@@ -34,7 +34,7 @@ def device_property_changed_cb(property_name, value, path, interface, device_pat
 
 	#logger.info("Getting dbus interface for device: %s interface: %s property_name: %s" % (device_path, interface, property_name))
 	bt_addr = ":".join(device_path.split('/')[-1].split('_')[1:])
-	
+
 	if properties["Connected"]:
 		logger.info("Device: %s has connected" % bt_addr)
 		devices.add(bt_addr)
@@ -42,12 +42,12 @@ def device_property_changed_cb(property_name, value, path, interface, device_pat
 		logger.info("Device: %s has disconnected" % bt_addr)
 		if (bt_addr in devices):
 			devices.remove(bt_addr)
-			
+
 	handle_speaker()
 
 def handle_speaker():
 	global speaker_status
-	
+
 	if (devices == set()):
 		if (speaker_status == True):
 			# Speaker sind an, können aber ausgeschalten werden
@@ -66,7 +66,7 @@ def handle_speaker():
 
 def handle_mpd():
 	global devices
-	
+
 	client = mpd.MPDClient()
 	client.timeout = 2
 	while(True):
@@ -78,9 +78,9 @@ def handle_mpd():
 		sleep(5)
 
 	logger.info("MPD Version: %s" % client.mpd_version)
-	
+
 	mpd_status = client.status().get('state')
-	
+
 	while(True):
 		# Variable setzen, falls es in der Schleife zu Exceptions kommt
 		new_status = 'Stop'
@@ -105,8 +105,8 @@ def handle_mpd():
 					break
 				except:
 					pass
-			
-		
+
+
 		if ((new_status == 'play') and (mpd_status == 'stop')):
 			logger.info('Neuer MPD Status: play')
 			devices.add('mpd')
@@ -115,9 +115,9 @@ def handle_mpd():
 			logger.info('Neuer MPD Status: stop')
 			if ('mpd' in devices):
 				devices.remove('mpd')
-			
+
 			handle_speaker()
-		
+
 		mpd_status = new_status
 
 
@@ -144,10 +144,10 @@ if __name__ == "__main__":
 
 	# listen for signals on the Bluez bus
 	bus.add_signal_receiver(device_property_changed_cb, bus_name="org.bluez", signal_name="PropertiesChanged", path_keyword="device_path", interface_keyword="interface")
-	
+
 	th = threading.Thread(target=handle_mpd)
 	th.start()
-	
+
 	try:
 		mainloop = GObject.MainLoop()
 		mainloop.run()
