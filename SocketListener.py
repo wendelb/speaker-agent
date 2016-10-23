@@ -97,6 +97,7 @@ class SocketListener(object):
 
         s.listen(5)
         self.logger.debug('Socket is up')
+        os.chmod(socket_folder + '/' + socket_filename, 0o666)
 
         while True:
             conn, addr = s.accept()
