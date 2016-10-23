@@ -1,29 +1,23 @@
 #!/usr/bin/python3
 
-import os
-import sys
-import signal
-import logging
-import logging.handlers
 import dbus
 import dbus.service
 import dbus.mainloop.glib
-import threading
-import socket
+import logging
+import logging.handlers
+import os
+import sys
+import signal
 from gi.repository import GObject
 from MPDListener import MPDListener
 from SocketListener import SocketListener
 from SpeakerActor import Speakers
 
-LOG_LEVEL = logging.INFO
-#LOG_LEVEL = logging.DEBUG
+#LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 LOG_FILE = "/dev/stdout"
-LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
+LOG_FORMAT = "%(asctime)s %(name)s %(levelname)s %(message)s"
 BLUEZ_DEV = "org.bluez.MediaControl1"
-
-# Initialize Logger
-logger = logging.getLogger("bt_auto_loader")
-setupLogger(logger)
 
 def setupLogger(logger):
     logger.setLevel(LOG_LEVEL)

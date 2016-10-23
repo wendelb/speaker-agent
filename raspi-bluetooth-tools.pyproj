@@ -40,6 +40,17 @@
       <Architecture>X86</Architecture>
     </Interpreter>
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="MPDListener.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SocketListener.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SpeakerActor.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
 </Project>
