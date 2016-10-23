@@ -13,6 +13,7 @@ import socket
 from gi.repository import GObject
 import mpd
 from time import sleep
+from SpeakerActor import Speakers
 
 LOG_LEVEL = logging.INFO
 #LOG_LEVEL = logging.DEBUG
@@ -20,13 +21,21 @@ LOG_FILE = "/dev/stdout"
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 BLUEZ_DEV = "org.bluez.MediaControl1"
 
-# List of all connected devices
-devices = set()
-speaker_status = False
+# Initialize Logger
+logger = logging.getLogger("bt_auto_loader")
+setupLogger(logger)
 
-# The way to stop mpd
-mpc = False
-aborted = False
+def setupLogger(logger):
+    logger.setLevel(LOG_LEVEL)
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(LOG_FORMAT)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+
+# Initialize Logger
+logger = logging.getLogger("SpeakerAgent")
+setupLogger(logger)
 
 def device_property_changed_cb(property_name, value, path, interface, device_path):
     global bus, devices
@@ -41,39 +50,18 @@ def device_property_changed_cb(property_name, value, path, interface, device_pat
 
     if properties["Connected"]:
         logger.info("Device: %s has connected" % bt_addr)
-        devices.add(bt_addr)
+        Speakers.addDevice(bt_addr)
     else:
         logger.info("Device: %s has disconnected" % bt_addr)
-        if (bt_addr in devices):
-            devices.remove(bt_addr)
+        Speakers.removeDevice(bt_addr)
 
-    handle_speaker()
 
-def handle_speaker():
-    global speaker_status
-
-    if (devices == set()):
-        if (speaker_status == True):
-            # Speaker sind an, können aber ausgeschalten werden
-            logger.info('Turning off speakers')
-            os.system('gpio write 2 1')
-            speaker_status = False
-    else:
-        if (speaker_status == False):
-            logger.info('Turning on speakers')
-            logger.info('Aktuell verbundene Geräte: %s' % devices)
-            os.system('gpio write 2 0')
-            speaker_status = True
-        else:
-            # Es kam ein Gerät dazu
-            logger.info('Aktuell verbundene Geräte: %s' % devices)
 
 def handle_mpd():
     global devices
 
     client = mpd.MPDClient()
     client.timeout = 2
-    mpc = client
     while(True):
         try:
             client.connect("localhost", 6600)
@@ -86,7 +74,7 @@ def handle_mpd():
 
     mpd_status = client.status().get('state')
 
-    while (not aborted):
+    while (True):
         # Variable setzen, falls es in der Schleife zu Exceptions kommt
         new_status = 'Stop'
         try:
@@ -97,14 +85,7 @@ def handle_mpd():
             logger.warn('Verbindung zu MPD verloren')
 
             # -> keine Speaker mehr
-            if ('mpd' in devices):
-                devices.remove('mpd')
-
-            handle_speaker()
-
-            # Wenn beendet werden soll, dann halt beenden
-            if (aborted):
-                return
+            removeDevice('mpd')
 
             # -> neu verbinden
             while(True):
@@ -118,31 +99,25 @@ def handle_mpd():
 
         if ((new_status == 'play') and (mpd_status == 'stop')):
             logger.info('Neuer MPD Status: play')
-            devices.add('mpd')
-            handle_speaker()
+            Speakers.addDevice('mpd')
         elif ((new_status == 'stop') and (mpd_status == 'play')):
             logger.info('Neuer MPD Status: stop')
-            if ('mpd' in devices):
-                devices.remove('mpd')
-
-            handle_speaker()
+            Speakers.removeDevice('mpd')
 
         mpd_status = new_status
 
 
 def shutdown(signum, frame):
-    aborted = True
+    logger.error("Shutdown received")
     mainloop.quit()
-    mpc.close()
+
 
 if __name__ == "__main__":
     # shut down on a TERM signal
+    # apparently this is not working as expected!
     signal.signal(signal.SIGTERM, shutdown)
 
     # start logging
-    logger = logging.getLogger("bt_auto_loader")
-    logger.setLevel(LOG_LEVEL)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.info("Starting to monitor Bluetooth connections")
 
     # Get the system bus
@@ -163,6 +138,7 @@ if __name__ == "__main__":
         mainloop = GObject.MainLoop()
         mainloop.run()
     except KeyboardInterrupt:
+        logger.error("Keyboard Interrupt")
         pass
     except:
         logger.error("Unable to run the GObject main loop")
