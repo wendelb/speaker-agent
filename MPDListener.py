@@ -5,13 +5,17 @@ from mpd import MPDClient
 from SpeakerActor import Speakers
 
 class MPDListener(object):
-    """description of class"""
+    """
+    This class connects to the local mpd via unix socket and ensures
+    that the speakers are turned on, while mad is playing
+    """
 
     def __init__(self):
         self.logger = logging.getLogger('SpeakerAgent.MPDListener')
 
 
     def run(self):
+        """Start the handler in background"""
         th = threading.Thread(target=self._thread,args=())
         th.start()
 

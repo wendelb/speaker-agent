@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+"""
+Main file to be called by systemd (or your init-system in case you don’t have systemd)
+"""
+
 import dbus
 import dbus.service
 import dbus.mainloop.glib
@@ -20,6 +24,7 @@ LOG_FORMAT = "%(asctime)s %(name)s %(levelname)s %(message)s"
 BLUEZ_DEV = "org.bluez.MediaControl1"
 
 def setupLogger(logger):
+    """Setup the supplied logger. All other used loggers should be children of this one. To become a child you need to have this loggers name as basename"""
     logger.setLevel(LOG_LEVEL)
     handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(LOG_FORMAT)
@@ -32,6 +37,7 @@ logger = logging.getLogger("SpeakerAgent")
 setupLogger(logger)
 
 def device_property_changed_cb(property_name, value, path, interface, device_path):
+    """This function is the callback that gets executed, when there is a bluetooth event"""
     global bus, devices
     if property_name != BLUEZ_DEV:
         return
@@ -75,12 +81,15 @@ if __name__ == "__main__":
     # listen for signals on the Bluez bus
     bus.add_signal_receiver(device_property_changed_cb, bus_name="org.bluez", signal_name="PropertiesChanged", path_keyword="device_path", interface_keyword="interface")
 
+    # Start the worker for mpd
     mpd = MPDListener()
     mpd.run()
 
+    # Start the worker for our listening socket
     socket = SocketListener()
     socket.run()
 
+    # Run the bus specific events
     try:
         mainloop = GObject.MainLoop()
         mainloop.run()

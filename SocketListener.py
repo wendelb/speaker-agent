@@ -9,9 +9,13 @@ socket_filename = 'socket'
 socket_folder   = '/run/speakers'
 
 class SocketListener(object):
-    """description of class"""
+    """
+    This class create a unix socket and listens for connections. Connecting
+    to this class allows the client to acquire or release a lock on the speaker.
+    """
 
     def __init__(self):
+        """Prepare the system"""
         self.logger = logging.getLogger('SpeakerAgent.SocketListener')
         try:
             os.makedirs(socket_folder, exist_ok=True)
@@ -27,6 +31,7 @@ class SocketListener(object):
             sys.exit(12)
 
     def run(self):
+        """Setup socket and handle everything in background"""
         th = threading.Thread(target=self._threadWaitForConnection,args=())
         th.start()
 
