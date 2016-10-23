@@ -12,9 +12,9 @@ The central hub connects to dbus (for Bluetooth), mpd (for radio) and has an API
 There are two main scripts in this repository: 
 
 1. The first one is `simple-agent.py` which handles all the bluetooth related stuff.
-2. THen there is `speaker-agent.py` which does all the magic.
+2. Then there is `speaker-agent.py` which does all the magic.
 
 ## Further reading
 
-For a client to connect to this hib, check out [Speaker Control](https://github.com/wendelb/speaker-control)
+For a client to connect to this hub, check out [Speaker Control](https://github.com/wendelb/speaker-control)
 
